@@ -1,0 +1,5 @@
+(datetime.datetime(2013, 1, 1, 0, 0, tzinfo=datetime.timezone.utc), Decimal('94.000000000000000'), Decimal('15.857142857142858'))
+(datetime.datetime(2016, 1, 1, 0, 0, tzinfo=datetime.timezone.utc), Decimal('94.300000000000000'), Decimal('18.466666666666665'))
+(datetime.datetime(2015, 1, 1, 0, 0, tzinfo=datetime.timezone.utc), Decimal('98.000000000000000'), Decimal('13.428571428571429'))
+(datetime.datetime(2017, 1, 1, 0, 0, tzinfo=datetime.timezone.utc), Decimal('100.000000000000000'), Decimal('100.000000000000000'))
+(datetime.datetime(2014, 1, 1, 0, 0, tzinfo=datetime.timezone.utc), Decimal('96.857142857142860'), Decimal('20.875000000000000'))
