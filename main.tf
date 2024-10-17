@@ -1,80 +1,81 @@
-# Terraform configuration to manage Docker-based resources
+# Specify Terraform configuration for managing Docker-based resources
 terraform {
   required_providers {
     docker = {
-      source  = "kreuzwerker/docker"  # Specifies the Docker provider source
-      version = "3.0.2"               # Locks the Docker provider version
+      source  = "kreuzwerker/docker"  # Specifies the source for the Docker provider plugin
+      version = "3.0.2"               # Locks the provider version for consistent behavior
     }
   }
 }
 
-# Configure the local provider (used for managing local files)
+# Configure the local provider (used to create and manage local files)
 provider "local" {
 }
 
-# Configure the Docker provider
+# Configure the Docker provider to allow Terraform to interact with Docker resources
 provider "docker" {
 }
 
-# Define a Docker network resource with duplication check and attachable options
+# Define a Docker network resource
 resource "docker_network" "dbnet" {
-  name            = "db-net"
-  check_duplicate = true
-  attachable      = true
+  name            = "db-net"          # Name of the network
+  check_duplicate = true              # Avoid duplicate network creation if it already exists
+  attachable      = true              # Allow containers to attach to this network after creation
 }
 
-# Build and manage a Docker image for a custom PostgreSQL server
+# Define a Docker image resource to build a custom PostgreSQL image
 resource "docker_image" "postgres" {
-  name = "postgres-custom:latest"
+  name = "postgres-custom:latest"     # Name of the custom image
   build {
-    context = "docker/postgres"         # Context directory for Docker build
-    tag     = ["postgres-custom:latest"]
+    context = "docker/postgres"       # Path to the Dockerfile context for building this image
+    tag     = ["postgres-custom:latest"]  # Tags to apply to the built image
   }
 }
 
-# Build and manage a Docker image for a custom Python environment
+# Define a Docker image resource to build a custom Python environment image
 resource "docker_image" "python" {
-  name = "pythonenv-custom:latest"
+  name = "pythonenv-custom:latest"    # Name of the custom image
   build {
-    context = "docker/pythonenv"        # Context directory for Docker build
-    tag     = ["pythonenv-custom:latest"]
+    context = "docker/pythonenv"      # Path to the Dockerfile context for building this image
+    tag     = ["pythonenv-custom:latest"]  # Tags to apply to the built image
   }
 }
 
-# Deploy a Docker container using the custom PostgreSQL image
+# Deploy a Docker container for PostgreSQL using the custom-built image
 resource "docker_container" "postgres" {
-  image    = docker_image.postgres.image_id
-  name     = "postgres-custom"
-  hostname = "postgresdb"               # Set hostname within the container
+  image    = docker_image.postgres.image_id  # Use the custom PostgreSQL image
+  name     = "postgres-custom"               # Name of the container
+  hostname = "postgresdb"                    # Set the hostname within the container
   networks_advanced {
-    name = docker_network.dbnet.id      # Connect to the defined Docker network
+    name = docker_network.dbnet.id           # Connect the container to the defined Docker network
   }
 }
 
-# Create a local file resource for output purposes
+# Create a local file as an output or placeholder (can be used for debugging or tracking purposes)
 resource "local_file" "copy_file" {
-  filename = "${path.cwd}/out/.nocontent"  # Path and filename of the local file
-  content  = ""                            # File content (empty)
+  filename = "${path.cwd}/out/.nocontent"  # Path and filename for the local file
+  content  = ""                            # Content of the file (left empty)
 }
 
-# Deploy a Docker container to run a Python script in the custom environment
+# Deploy a Docker container for running a Python script in the custom Python environment
 resource "docker_container" "python_script" {
   image    = docker_image.python.image_id
-  name     = "python-script"
-  attach   = true                         # Attach to container stdout
-  must_run = false                        # Do not start the container automatically
-  command  = ["python3", "/app/humidity_chart.py"]  # Command to run the Python script
-  mounts {                                 # Mount local directory to container
+  name     = "python-script"               # Name of the container
+  attach   = true                          # Attach to the container's stdout
+  must_run = false                         # Do not automatically start this container
+  command  = ["python3", "/app/humidity_chart.py"]  # Command to run a Python script in the container
+  
+  mounts {                                 # Mount a local directory to the container for output
     target = "/out"
     source = "${path.cwd}/out"
     type   = "bind"
   }
-  mounts {                                 # Mount application directory to container
+  mounts {                                 # Mount the application directory to the container
     target = "/app"
     source = "${path.cwd}/app"
     type   = "bind"
   }
   networks_advanced {
-    name = docker_network.dbnet.id        # Connect to the defined Docker network
+    name = docker_network.dbnet.id         # Connect the container to the Docker network
   }
 }
